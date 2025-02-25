@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo de Pago</title>
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{ company_logo }}" class="logo" alt="Logo de la Empresa">
+            <h3>{{company_name}}</h3>
+            <p>SERVICIO DE AGUA Y ALCANTARILLADO</p>
+        </div>
+        
+        <div class="right">
+            <p class="bold">RUC: {{ company_ruc }}</p>
+            <p class="bold">RECIBO Nº {{ invoice.id }}</p>
+        </div>
+        
+        <div class="section">
+            <p><span class="bold">Cliente:</span> {{ customer.full_name }}</p>
+            <p><span class="bold">DIRECCIÓN:</span> {{ customer.address }}</p>
+            <!-- <p><span class="bold">CÓDIGO:</span> {{ customer.id }}</p> -->
+        </div>
+   
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>MES</th>
+                    <th>AGUA</th>
+                    <th>ALCANTAR.</th>
+                    <th>IMPORTE</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in payments %}
+                <tr>
+                    <td>{{ item.reading.reading_date | date:"F Y" }}</td>
+                    <td>{{ item.invoice.customer.water_fee }}</td>
+                    <td>{{ item.invoice.customer.sewer_fee }}</td>
+                    <td>{{ item.amount_paid }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <p class="total">TOTAL: S/. {{ invoice.total_amount }}</p>
+        
+        <div class="footer">
+            <!-- <p>SI ERES VÍCTIMA DE VIOLENCIA FAMILIAR Y SEXUAL, ACUDE AL CENTRO EMERGENCIA MUJER AMBO...</p> -->
+        </div>
+    </div>
+</body>
+</html>

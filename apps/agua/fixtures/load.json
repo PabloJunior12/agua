@@ -1,0 +1,61 @@
+[
+  {
+    "model": "agua.company",
+    "pk": 1,
+    "fields": {
+      "name": "Consultoría & Sistemas-INFO S.A.C",
+      "ruc": "99999999999",
+      "logo": "logos/default.jpg"
+    }
+  },
+  {
+    "model": "agua.category",
+    "pk": 1,
+    "fields": {
+      "name": "domestico",
+      "water_fee": 5,
+      "sewer_fee": 0,
+      "mora": 0
+    }
+  },
+  {
+    "model": "agua.zona",
+    "pk": 1,
+    "fields": {
+      "name": "zona cero"
+    }
+  },
+  {
+    "model": "agua.calle",
+    "pk": 1,
+    "fields": {
+      "codigo": "0001",
+      "name": "jr abancay",
+      "zona_id" : 1
+    }
+  },
+  {
+    "model": "agua.year",
+    "pk": 1,
+    "fields": {
+      "year": 2023,
+      "state": true
+    }
+  },
+  {
+    "model": "agua.year",
+    "pk": 2,
+    "fields": {
+      "year": 2024,
+      "state": true
+    }
+  },
+  {
+    "model": "agua.year",
+    "pk": 3,
+    "fields": {
+      "year": 2025,
+      "state": true
+    }
+  }
+]
