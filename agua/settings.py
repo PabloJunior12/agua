@@ -133,7 +133,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",  # Ejemplo para un frontend local
-    "https://mi-dominio.com",  # Dominio de producción
+    "https://agua.jsistemas.info/",  # Dominio de producción
 ]
 
 
