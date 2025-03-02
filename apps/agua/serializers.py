@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from .models import Year, Category, Zona, Calle, Reading, Invoice, Customer, Company, InvoicePayment
+from .utils import next_month_date
+
 import os
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -93,26 +95,63 @@ class ReadingSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate(self, data):
-        # Obtenemos el customer desde el request o de la instancia en caso de actualización
+        
         customer = data.get('customer', self.instance.customer if self.instance else None)
         reading_date = data.get('reading_date', self.instance.reading_date if self.instance else None)
+        current_reading = data.get('current_reading', self.instance.current_reading if self.instance else None)
 
-        # Validamos que no exista una lectura duplicada para el mismo mes y cliente
-        if self.instance:  # Actualización
-            existing_reading = Reading.objects.filter(
-                customer=customer,
-                reading_date__year=reading_date.year,
-                reading_date__month=reading_date.month
-            ).exclude(id=self.instance.id).exists()
-        else:  # Creación
-            existing_reading = Reading.objects.filter(
-                customer=customer,
-                reading_date__year=reading_date.year,
-                reading_date__month=reading_date.month
-            ).exists()
+        if not customer or not reading_date:
+            return data
 
-        if existing_reading:
-            raise serializers.ValidationError("Ya existe una lectura para este mes y cliente.")
+        # 1) Evitar lecturas duplicadas en el mismo mes y cliente
+        qs = Reading.objects.filter(
+            customer=customer,
+            reading_date__year=reading_date.year,
+            reading_date__month=reading_date.month
+        )
+        if self.instance:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise serializers.ValidationError(
+                "Ya existe una lectura registrada para este cliente en el mismo mes."
+            )
+
+        # 2) Evitar registrar un mes anterior si ya existe uno posterior
+        future_qs = Reading.objects.filter(
+            customer=customer,
+            reading_date__gt=reading_date
+        )
+        if future_qs.exists():
+            raise serializers.ValidationError(
+                "No se puede registrar una lectura en un mes anterior a una ya existente."
+            )
+
+        # 3) Verificar que no se salten meses.
+        #    Obtenemos la última lectura (mes anterior) y comprobamos que la nueva sea el mes siguiente.
+        last_reading = Reading.objects.filter(
+            customer=customer,
+            reading_date__lt=reading_date
+        ).order_by('-reading_date').first()
+
+        if last_reading:
+            # Calculamos la fecha del "próximo mes" a partir de la última lectura
+            expected_next_date = next_month_date(last_reading.reading_date)
+
+            # Comparamos solo año y mes (en caso de que no uses día=1):
+            if (reading_date.year != expected_next_date.year) or (reading_date.month != expected_next_date.month):
+                raise serializers.ValidationError(
+                    "Debes registrar el mes consecutivo. El siguiente mes esperado es: "
+                    f"{expected_next_date.strftime('%B %Y')}"
+                )
+
+            # (Opcional) Verificar que current_reading >= last_reading.current_reading
+            if current_reading < last_reading.current_reading:
+                raise serializers.ValidationError(
+                    "La lectura actual no puede ser menor que la última lectura registrada."
+                )
+        else:
+            # Si no hay lecturas previas, esta es la primera: no hay mes anterior que validar.
+            pass
 
         return data
 

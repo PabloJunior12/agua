@@ -18,6 +18,7 @@ from datetime import datetime
 from weasyprint import HTML, CSS
 from io import BytesIO
 
+
 import os
 import tempfile
 
@@ -48,7 +49,7 @@ class CustomerViewSet(ModelViewSet):
     # filterset_fields = ['dni', 'meter_code']
 
     # Búsqueda parcial para Name
-    search_fields = ['full_name']
+    search_fields = ['full_name','dni']
 
 class ReadingViewSet(ModelViewSet):
 
@@ -142,44 +143,36 @@ class CustomerUnpaidInvoicesView(APIView):
 class PDFGeneratorAPIView(APIView):
 
     def get(self, request, invoice_id, *args, **kwargs):
-        # Obtener la factura con el cliente y pagos
         invoice = get_object_or_404(Invoice, id=invoice_id)
         company = Company.objects.first()
         customer = invoice.customer
         payments = InvoicePayment.objects.filter(invoice=invoice)
 
-        # Datos para la plantilla
         context = {
             "invoice": invoice,
             "customer": customer,
             "payments": payments,
-            "total_paid": sum((p.amount_paid for p in payments), 0),  # Evita error si no hay pagos,
+            "total_paid": sum((p.amount_paid for p in payments), 0),
             "company_name": company.name if company else "Empresa",
             "company_ruc": company.ruc if company else "99999999999",
             "company_logo": request.build_absolute_uri(company.logo.url) if company and company.logo else None
         }
 
-   
-        # Cargar la plantilla HTML
         template = get_template('agua/hola.html')
         html_string = template.render(context)
 
-        # Ruta del CSS
+        pdf_buffer = BytesIO()
         css_path = os.path.join(settings.BASE_DIR, "static/css/ticket.css")
 
-        # Crear un buffer de memoria para el PDF
-        pdf_buffer = BytesIO()
-        HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf(
-            pdf_buffer, stylesheets=[CSS(filename=css_path)]
-        )
+        HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf(pdf_buffer, stylesheets=[CSS(css_path)])
 
-        # Mover el puntero al inicio del buffer
         pdf_buffer.seek(0)
-
-        # Responder con el PDF generado
         response = HttpResponse(pdf_buffer.read(), content_type="application/pdf")
-        response["Content-Disposition"] = 'inline; filename="invoice_{}.pdf"'.format(invoice.id)  # Nombre dinámico
+        response["Content-Disposition"] = 'inline; filename="invoice_ticket.pdf"'
         return response
+
+
+
 
 class PDFReciboApiView(APIView):
 
