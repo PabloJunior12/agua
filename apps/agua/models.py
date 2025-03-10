@@ -146,11 +146,11 @@ class Reading(models.Model):
 
     def save(self, *args, **kwargs):
 
-        last_reading = Reading.objects.filter(customer=self.customer).order_by('-reading_date').first()
+        # last_reading = Reading.objects.filter(customer=self.customer).order_by('-reading_date').first()
 
-        if self.pk and self != last_reading:
+        # if self.pk and self != last_reading:
 
-           raise ValidationError("No se puede editar una lectura que no sea la ultima")
+        #    raise ValidationError("No se puede editar una lectura que no sea la ultima")
 
         if not self.correlative:
 

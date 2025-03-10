@@ -17,7 +17,7 @@ from .serializers import CompanySerializer, YearSerializer, CustomerSerializer, 
 from datetime import datetime
 from weasyprint import HTML, CSS
 from io import BytesIO
-
+from decimal import Decimal
 
 import os
 import tempfile
@@ -122,12 +122,13 @@ class InvoiceViewSet(ModelViewSet):
 
         for payment in payments_data:
             reading_id = payment.get('reading')
-            amount_paid = payment.get('amount_paid')
+            amount_paid = Decimal(payment.get('amount_paid'))
 
             reading = get_object_or_404(Reading, id=reading_id)  # Obtener la lectura
 
             # Validar que el pago no exceda el monto total de la lectura
             total_paid = sum(p.amount_paid for p in reading.payments.all()) + amount_paid
+ 
             if total_paid > reading.total_amount:
                 return Response(
                     {"error": f"El total pagado para el Reading {reading.id} excede el monto permitido."}, 
