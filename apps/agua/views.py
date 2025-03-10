@@ -154,6 +154,7 @@ class InvoiceViewSet(ModelViewSet):
 
         return Response(InvoiceSerializer(invoice).data, status=status.HTTP_201_CREATED)
 
+
 class CategoryViewSet(ModelViewSet):
     
     permission_classes = [IsAuthenticated]
