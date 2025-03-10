@@ -132,8 +132,8 @@ AUTH_USER_MODEL = 'user.User'
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200",  # Ejemplo para un frontend local
-    "https://agua.jsistemas.info/",  # Dominio de producciÃ³n
+    "http://localhost:4200", 
+    "https://agua.jsistemas.info"
 ]
 
 
