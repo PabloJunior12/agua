@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
-from .models import Year, Category, Zona, Calle, Reading, Invoice, Customer, Company, InvoicePayment
+from .models import Year, Category, Zona, Calle, Reading, Invoice, Customer, Company, InvoicePayment, Service
 from .utils import next_month_date
+from django.db import transaction
 
 import os
 
@@ -24,7 +25,8 @@ class CompanySerializer(serializers.ModelSerializer):
         instance.logo = new_logo if new_logo else instance.logo  # Mantener el anterior si no se envía nuevo
         instance.name = validated_data.get("name", instance.name)
         instance.ruc = validated_data.get("ruc", instance.ruc)
-      
+        instance.address = validated_data.get("address", instance.address)
+
         instance.save()
         return instance
 
@@ -165,43 +167,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invoice
-        fields = ['id', 'customer', 'total_amount', 'date_of_issue', 'payments']
-
-    def create(self, validated_data):
-        payments_data = validated_data.pop('payments', [])  # Lista de pagos enviados
-        invoice = Invoice.objects.create(**validated_data)  # Crear la factura sin asociar readings aún
-
-        total_invoice_amount = 0  # Variable para calcular el total de la factura
-
-        for payment in payments_data:
-            reading_id = payment.get('reading')
-            amount_paid = payment.get('amount_paid')
-
-            reading = Reading.objects.get(id=reading_id)  # Obtener el Reading
-
-            # Validar que no se pague más de lo que cuesta la lectura
-            total_paid = sum(p.amount_paid for p in reading.payments.all()) + amount_paid
-            if total_paid > reading.total_amount:
-                raise serializers.ValidationError(f"El total pagado para el Reading {reading.id} excede el monto permitido.")
-
-            # Crear InvoicePayment
-            InvoicePayment.objects.create(
-                invoice=invoice,
-                reading=reading,
-                amount_paid=amount_paid
-            )
-
-            total_invoice_amount += amount_paid  # Sumar el pago al total de la factura
-
-            # Actualizar estado de la lectura
-            reading.is_paid = total_paid >= reading.total_amount
-            reading.save()
-
-        # Guardar el total de la factura
-        invoice.total_amount = total_invoice_amount
-        invoice.save()
-
-        return invoice
+        fields = '__all__'
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -214,4 +180,8 @@ class InvoiceSerializer(serializers.ModelSerializer):
             }
         return data
 
+class ServiceSerializer(serializers.ModelSerializer):
 
+    class Meta:
+        model = Service
+        fields = '__all__'

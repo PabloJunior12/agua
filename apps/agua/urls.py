@@ -1,6 +1,6 @@
 from rest_framework import routers
 from django.urls import path
-from .views import CompanyViewSet, YearViewSet, CustomerViewSet, ReadingViewSet, InvoiceViewSet, CategoryViewSet, ZonaViewSet, CalleViewSet, PDFGeneratorAPIView, PDFReciboApiView, CustomerUnpaidInvoicesView
+from .views import CompanyViewSet, YearViewSet, CustomerViewSet, ReadingViewSet, InvoiceViewSet, CategoryViewSet, ZonaViewSet, CalleViewSet, PDFGeneratorAPIView, PDFReciboApiView, CustomerUnpaidInvoicesView, ServiceViewSet
 
 router = routers.DefaultRouter()
 
@@ -12,6 +12,7 @@ router.register("invoice", InvoiceViewSet)
 router.register("category", CategoryViewSet)
 router.register("zona", ZonaViewSet)
 router.register("calle", CalleViewSet)
+router.register("service", ServiceViewSet)
 
 urlpatterns = [
  path('customer/<str:dni>/unpaid-invoices/', CustomerUnpaidInvoicesView.as_view(), name='customer-unpaid-invoices'),

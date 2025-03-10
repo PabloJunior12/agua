@@ -7,7 +7,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'phone', 'is_active', 'is_staff', 'password']
+        fields = ['id', 'email', 'name', 'surname', 'phone', 'is_active', 'is_staff', 'password']
         # O cualquier otro campo que quieras exponer
 
     def create(self, validated_data):

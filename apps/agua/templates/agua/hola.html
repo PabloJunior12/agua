@@ -11,12 +11,11 @@
         <div class="header">
             <img src="{{ company_logo }}" class="logo" alt="Logo de la Empresa">
             <h3>{{company_name}}</h3>
-            <p>SERVICIO DE AGUA Y ALCANTARILLADO</p>
         </div>
         
         <div class="right">
             <p class="bold">RUC: {{ company_ruc }}</p>
-            <p class="bold">RECIBO Nº {{ invoice.id }}</p>
+            <p class="bold">RECIBO Nº {{ invoice.correlative }}</p>
         </div>
         
         <div class="section">
@@ -30,8 +29,7 @@
             <thead>
                 <tr>
                     <th>MES</th>
-                    <th>AGUA</th>
-                    <th>ALCANTAR.</th>
+
                     <th>IMPORTE</th>
                 </tr>
             </thead>
@@ -39,8 +37,7 @@
                 {% for item in payments %}
                 <tr>
                     <td>{{ item.reading.reading_date | date:"F Y" }}</td>
-                    <td>{{ item.invoice.customer.water_fee }}</td>
-                    <td>{{ item.invoice.customer.sewer_fee }}</td>
+
                     <td>{{ item.amount_paid }}</td>
                 </tr>
                 {% endfor %}

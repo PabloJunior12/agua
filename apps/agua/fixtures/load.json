@@ -9,6 +9,16 @@
     }
   },
   {
+    "model": "agua.service",
+    "pk": 1,
+    "fields": {
+      "name": "servicio de agua",
+      "fixed_price": 50,
+      "max_cubico": 10,
+      "extra_rate": 5
+    }
+  },
+  {
     "model": "agua.category",
     "pk": 1,
     "fields": {

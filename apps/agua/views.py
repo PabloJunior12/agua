@@ -12,8 +12,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 
-from .models import Year, Category, Zona, Calle, Reading, Invoice, Customer,Company, InvoicePayment
-from .serializers import CompanySerializer, YearSerializer, CustomerSerializer, ReadingSerializer, InvoiceSerializer, CategorySerializer, ZonaSerializer, CalleSerializer 
+from .models import Year, Category, Zona, Calle, Reading, Invoice, Customer,Company, InvoicePayment, Service
+from .serializers import CompanySerializer, YearSerializer, CustomerSerializer, ReadingSerializer, InvoiceSerializer, CategorySerializer, ZonaSerializer, CalleSerializer, ServiceSerializer
 from datetime import datetime
 from weasyprint import HTML, CSS
 from io import BytesIO
@@ -64,6 +64,7 @@ class ReadingViewSet(ModelViewSet):
         year = self.request.query_params.get('year')
 
         if year:
+
             queryset = queryset.filter(reading_date__year=year)
 
         return queryset
@@ -80,13 +81,77 @@ class ReadingViewSet(ModelViewSet):
             'readings': serializer.data,
             'customer': customer_serializer.data
         })
+    
+    def destroy(self, request, *args, **kwargs):
 
-     
+        instance = self.get_object()
+
+        # VERIFICAR SI HAY UNA LECTURA MAS RECIENTE PARA EL MISMO CLIENTE
+
+        has_newer_reading = Reading.objects.filter(
+            customer = instance.customer,
+            reading_date__gt = instance.reading_date
+        ).exists()
+
+        if has_newer_reading:
+
+           return Response({"error":"No se puede eliminar"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class InvoiceViewSet(ModelViewSet):
 
-    queryset = Invoice.objects.all()
+    queryset = Invoice.objects.all().order_by('-id')
     serializer_class = InvoiceSerializer
     pagination_class = CustomPagination
+
+    def create(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        payments_data = serializer.validated_data.pop('payments', [])  # Extraer los pagos
+
+        last_invoice = Invoice.objects.order_by('-id').first()
+        next_correlative = f"{(int(last_invoice.correlative) + 1):06d}" if last_invoice and last_invoice.correlative else "000001"
+
+        invoice = Invoice.objects.create(**serializer.validated_data, correlative = next_correlative)  # Crear la factura
+
+        total_invoice_amount = 0  # Variable para acumular el total de la factura
+
+        for payment in payments_data:
+            reading_id = payment.get('reading')
+            amount_paid = payment.get('amount_paid')
+
+            reading = get_object_or_404(Reading, id=reading_id)  # Obtener la lectura
+
+            # Validar que el pago no exceda el monto total de la lectura
+            total_paid = sum(p.amount_paid for p in reading.payments.all()) + amount_paid
+            if total_paid > reading.total_amount:
+                return Response(
+                    {"error": f"El total pagado para el Reading {reading.id} excede el monto permitido."}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Crear InvoicePayment
+            InvoicePayment.objects.create(
+                invoice=invoice,
+                reading=reading,
+                amount_paid=amount_paid
+            )
+
+            total_invoice_amount += amount_paid  # Sumar el pago al total de la factura
+
+            # Actualizar estado de la lectura
+            reading.is_paid = total_paid >= reading.total_amount
+            reading.save()
+
+        # Guardar el total de la factura
+        invoice.total_amount = total_invoice_amount
+        invoice.save()
+
+        return Response(InvoiceSerializer(invoice).data, status=status.HTTP_201_CREATED)
 
 class CategoryViewSet(ModelViewSet):
     
@@ -98,9 +163,14 @@ class CategoryViewSet(ModelViewSet):
 class ZonaViewSet(ModelViewSet):
     
     permission_classes = [IsAuthenticated]
-
     queryset = Zona.objects.all().order_by('id')
     serializer_class = ZonaSerializer
+
+class ServiceViewSet(ModelViewSet):
+    
+    permission_classes = [IsAuthenticated]
+    queryset = Service.objects.all().order_by('id')
+    serializer_class = ServiceSerializer
 
 class CalleViewSet(ModelViewSet):
     
@@ -146,7 +216,7 @@ class PDFGeneratorAPIView(APIView):
         invoice = get_object_or_404(Invoice, id=invoice_id)
         company = Company.objects.first()
         customer = invoice.customer
-        payments = InvoicePayment.objects.filter(invoice=invoice)
+        payments = InvoicePayment.objects.filter(invoice=invoice).order_by('reading__reading_date')
 
         context = {
             "invoice": invoice,
@@ -171,27 +241,48 @@ class PDFGeneratorAPIView(APIView):
         response["Content-Disposition"] = 'inline; filename="invoice_ticket.pdf"'
         return response
 
-
-
-
 class PDFReciboApiView(APIView):
 
     def get(self, request, reading_id, *args, **kwargs):   
-
         reading = Reading.objects.get(id=reading_id)
         company = Company.objects.first()  # Suponiendo que hay una sola empresa
+
+        # Obtener la lectura anterior de este cliente
+        previous_reading = Reading.objects.filter(
+            customer=reading.customer,
+            reading_date__lt=reading.reading_date
+        ).order_by('-reading_date').first()
+
+        # Cálculo del consumo excedente
+        consumption_excess = max(0, reading.consumption - reading.service.max_cubico)
+        total_excess_charge = consumption_excess * reading.service.extra_rate
+
+        # Buscar lecturas impagas anteriores del cliente
+        unpaid_readings = Reading.objects.filter(
+            customer=reading.customer,
+            is_paid=False,
+            due_date__lt=reading.reading_date
+        ).exclude(id=reading.id)
+        
+        total_due = sum(r.total_amount for r in unpaid_readings)
+
+        total =  reading.total_amount + total_due
 
         context = {
             "company": company,
             "customer": reading.customer,
             "reading": reading,
-            # "payments": invoice.payments.all(),
-            # "total_paid": sum(p.amount_paid for p in invoice.payments.all()),
+            "previous_reading": previous_reading,
+
+            "consumption_excess": consumption_excess,
+            "total_excess_charge": total_excess_charge,
+            
+            "unpaid_readings": unpaid_readings,
+            "total_due": total_due,
+            "total" : total,
+
             "company_logo": request.build_absolute_uri(company.logo.url) if company and company.logo else None
         }
-
-    
-
         template = get_template("agua/invoice_template.html")
         html_string = template.render(context)
 

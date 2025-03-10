@@ -1,9 +1,10 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <title>Recibo de Agua</title>
+    <title>Recibo de Agua - {{reading.correlative}}</title>
 </head>
 
 <body>
@@ -11,15 +12,14 @@
 
         <div class="header">
             <div class="logo">
-            <div class="content-logo">
-                <img src="{{ company_logo }}" alt="Logo de la Empresa">
-                <p>www.sedapal.com</p>
-                <p>Servicio de Agua Potable y Alcantarillado de Lima</p>
-                <p>Autopista Ramiro Prialé 210</p>
-                <p>El Agustino - Lima</p>
-                <p>RUC: 20100152356</p>
+                <div class="content-logo">
+                    <img src="{{ company_logo }}" alt="Logo de la Empresa">
+                    <p>{{company.name}}</p>
+                    <p>{{company.address}}</p>
+                 
+                    <p>RUC: {{company.ruc}}</p>
+                </div>
             </div>
-           </div>
 
             <!-- Información del cliente -->
             <div class="customer-info">
@@ -34,7 +34,7 @@
                     <br>
                     <div class="receipt-box">
                         <p><strong>RECIBO</strong></p>
-                        <a href="#">{{reading.id}}</a>
+                        <span>{{reading.correlative}}</span>
                     </div>
                 </div>
             </div>
@@ -47,62 +47,115 @@
                 <div class="title">INFORMACIÓN GENERAL</div>
                 <div class="info-general">
 
-                    <div class="row">
+                    <div class="p-5">
                         <div class="label">Titular de la conexión:</div>
-                        <div class="value">GAMARRA CHINCHAY ARTURO PERCEY</div>
+                        <div class="value">{{customer.full_name | upper}}</div>
                     </div>
-                
-                    <div class="row">
+
+                    <div class="p-5">
                         <div class="label">Dirección del suministro:</div>
-                        <div class="value">JR SUAREZ, BELISARIO F-07 03 - URB HIEDRAS DE SURCO VIEJO</div>
+                        <div class="value">{{customer.address | upper}}</div>
                     </div>
-                
+
                     <div class="row">
                         <div class="col">
-                            <div class="label">Distrito:</div>
-                            <div class="value">SURCO VIEJO</div>
+                            <div class="label">Tipo de facturacion:</div>
+                            <div class="value">PROMEDIO</div>
                         </div>
                         <div class="col">
-                            <div class="label">Frecuencia de facturación:</div>
-                            <div class="value">6</div>
+                            <div class="label">facturación:</div>
+                            <div class="value">MENSUAL</div>
                         </div>
                     </div>
-                
-                    <div class="row">
-                        <div class="col">
-                            <div class="label">Tipo de facturación:</div>
-                            <div class="value">LECTURA</div>
-                        </div>
-                        <div class="col">
-                            <div class="label">Tarifa:</div>
-                            <div class="value">MULTIF. NO INDIVID.</div>
-                        </div>
-                    </div>
-                
-                    <div class="row">
-                        <div class="col">
-                            <div class="label">Categoría:</div>
-                            <div class="value">RESIDENCIAL</div>
-                        </div>
-                        <div class="col">
-                            <div class="label">Unidad de Uso:</div>
-                            <div class="value">4</div>
-                        </div>
-                    </div>
-                
-                    <div class="row">
-                        <div class="col">
-                            <div class="label">Tipo de descarga:</div>
-                            <div class="value">4</div>
-                        </div>
-                        <div class="col">
-                            <div class="label">Actividad:</div>
-                            <div class="value">PREDIO MIXTO DOM CON UNA CONEX</div>
-                        </div>
-                    </div>
+
                 </div>
-                
-           
+                <div class="title">INFORMACIÓN COMPLEMENTARIA</div>
+                <div class="info-general">
+
+                    <div class="p-5">
+
+                        <table class="billing-table">
+                            <thead>
+                                <tr>
+                                    <th>Concepto</th>
+                                    <th>Cantidad</th>
+                                    <th>Tarifa (S/)</th>
+                                    <th>Total (S/)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Tarifa Fija ({{ reading.service.max_cubico|floatformat:0 }} m³)</td>
+                                    <td>{{ reading.service.max_cubico|floatformat:2 }} m³</td>
+                                    <td>{{ reading.service.fixed_price|floatformat:2 }}</td>
+                                    <td>{{ reading.service.fixed_price|floatformat:2 }}</td>
+                                </tr>
+                                {% if consumption_excess > 0 %}
+                                <tr>
+                                    <td>Consumo Excedente ({{ consumption_excess|floatformat:0 }} m³)</td>
+                                    <td>{{ consumption_excess|floatformat:2 }} m³</td>
+                                    <td>{{ reading.service.extra_rate|floatformat:2 }}</td>
+                                    <td>{{ total_excess_charge|floatformat:2 }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td colspan="3"><strong>Total Servicio Agua</strong></td>
+                                    <td><strong>{{ reading.total_amount|floatformat:2 }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+
+                    {% if unpaid_readings %}
+                    <div class="row">
+
+                        <div class="col">
+                            <img class="img-deuda" src="{% static 'images/sad.png' %}" alt="Mi Imagen">
+                        </div>
+                        <div class="col-2">
+                            <div><b>A LA FECHA USTED ADEUDA</b></div>
+
+                            <table class="billing-table">
+                                <thead>
+                                    <tr>
+                                        <th>Periodo</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                               
+                                    {% for reading in unpaid_readings %}
+                                    <tr>
+                                        <td>{{ reading.reading_date|date:"F Y"|upper }}</td>
+                                        <td>{{ reading.total_amount }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr>
+                                        <td>TOTAL ADEUDADO</td>
+                                        <td>{{total_due}}</td>
+                                    </tr>
+                             
+                                </tbody>
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                    {% else %}
+                    <div class="row">
+
+                        <div class="col">
+                            <img class="img-deuda" src="{% static 'images/happy.png' %}" alt="Mi Imagen">
+                        </div>
+                        <div class="col-2">
+                            <div class="pt-20"><b>GRACIAS POR ESTAR PUNTUAL CON SUS PAGOS</b></div>
+                        </div>
+
+                    </div>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="box-detalle">
@@ -111,125 +164,158 @@
 
                     <div class="row">
                         <div class="col">
-                            <div class="label">fecha de emisión:</div>
-                            <div class="value">04-02-2022</div>
+                            <div class="label">mes facturado:</div>
+                            <div class="value">{{reading.reading_date|date:'F'|upper}}</div>
                         </div>
                         <div class="col">
-                            <div class="label">Perido de consumo:</div>
-                            <div class="value">04-02-2022 - 03/06/2020</div>
+                            <div class="label">fecha de emision:</div>
+                            <div class="value">{{reading.issue_date}}</div>
                         </div>
                     </div>
-                
+
                     <div class="row">
                         <div class="col">
-                            <div class="label">mes facturado:</div>
-                            <div class="value">junio</div>
+                            <div class="label">fecha de vencimiento:</div>
+                            <div class="value">{{reading.due_date}}</div>
                         </div>
                         <div class="col">
-                            <div class="label">fecha de vencimiento:</div>
-                            <div class="value">20-06-2024</div>
+                            <div class="label">fecha de corte:</div>
+                            <div class="value">{{reading.cut_off_date}}</div>
                         </div>
                     </div>
-                
+
 
                 </div>
                 <div class="title">LECTURA DE MEDIDOR</div>
                 <div class="info-general">
                     <div class="row">
                         <div class="col">
-                            <div class="label">medidor:</div>
-                            <div class="value">04-02-2022</div>
+                            <div>
+                                <span class="label">Lectura actual:</span> <span>{{reading.current_reading}}</span>
+                            </div>
                         </div>
                         <div class="col">
-                            <div class="label">anterior</div>
-                            <div class="value">1157</div>
-                        </div>
-                        <div class="col">
-                            <div class="label">actual:</div>
-                            <div class="value">1234</div>
-                        </div>
-                        <div class="col">
-                            <div class="label">consumo:</div>
-                            <div class="value">77</div>
+
+                            <div>
+                                <span class="label">Fecha:</span> <span>{{reading.reading_date | date:"d-m-Y" }}</span>
+                            </div>
                         </div>
                     </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <div>
+                                <span class="label">Lectura anterior:</span>
+                                <span>{{previous_reading.current_reading}}</span>
+                            </div>
+
+                        </div>
+                        <div class="col">
+
+                            <div>
+                                <span class="label">Fecha:</span> <span>{{previous_reading.reading_date | date:"d-m-Y"}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <div>
+                                <span class="label">Direrencia de lecturas:</span> <span>{{reading.consumption}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <div>
+                                <span class="label">Consumo facturado:</span> <span>{{reading.consumption}} M3</span>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="title">DETALLE DE FACTURACIÓN</div>
-           
+                <div class="info-general">
+
+                    <div class="p-5">
+                        <div class="d-flex justify-content-between">
+                            <span class="label">servicio de Agua potable</span>
+                            <span>{{reading.total_amount}}</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <span class="label">cargo fijo</span>
+                            <span>0</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <span class="label">total mes</span>
+                            <span>{{reading.total_amount}}</span>
+                        </div>
+
+                        <div class="pt-20 d-flex justify-content-between">
+                            <span class="label">Deuda Anterior</span>
+                            <span>{{total_due}}</span>
+                        </div>
+
+                        <div class="pb-10 pt-30 d-flex justify-content-end text-total">
+                            <span class="pr-5">total</span>
+                            <span>{{total}}</span>
+                        </div>
+
+                    </div>
+
+                    <!-- <table>
+                        <tr>
+                            <th>Descripción</th>
+                            <th>Monto (USD)</th>
+                        </tr>
+                        <tr>
+                            <td>Tarifa fija</td>
+                            <td>{{ fixed_price }}</td>
+                        </tr>
+                        <tr>
+                            <td>Consumo máximo permitido</td>
+                            <td>{{ max_cubico }} m³</td>
+                        </tr>
+                        {% if exceso > 0 %}
+                        <tr>
+                            <td>Exceso de consumo ({{ exceso }} m³ x {{ extra_rate }} USD/m³)</td>
+                            <td>{{ extra_charge }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td><strong>Total del mes actual</strong></td>
+                            <td><strong>{{ total_amount }}</strong></td>
+                        </tr>
+                    </table> -->
+
+                    <!-- {% if unpaid_readings %}
+                    <h3>Facturas pendientes</h3>
+                    <table>
+                        <tr>
+                            <th>Mes</th>
+                            <th>Monto</th>
+                        </tr>
+                        {% for reading in unpaid_readings %}
+                        <tr>
+                            <td>{{ reading.reading_date|date:"F Y" }}</td>
+                            <td>{{ reading.total_amount }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr>
+                            <td><strong>Total Adeudado</strong></td>
+                            <td><strong>{{ total_due }}</strong></td>
+                        </tr>
+                    </table>
+                    {% endif %} -->
+
+                </div>
             </div>
 
-            <!-- <div class="box-detalle info-complementaria">INFORMACIÓN COMPLEMENTARIA</div>
-            <div class="box-detalle info-lectura">LECTURA DE MEDIDOR</div> -->
-
         </div>
 
-
-        <!-- <div class="section blue-box">
-            INFORMACIÓN GENERAL
-        </div>
-        <div class="section">
-            <p><strong>Titular de la conexión:</strong> {{ invoice.customer.name }}</p>
-            <p><strong>Dirección:</strong> {{ invoice.customer.address }}</p>
-        </div>
-
-        <div class="section blue-box">
-            INFORMACIÓN DE PAGO
-        </div>
-        <div class="section">
-            <p><strong>Fecha de emisión:</strong> {{ invoice.date_issued }}</p>
-            <p><strong>Fecha de vencimiento:</strong> {{ invoice.due_date }}</p>
-        </div>
-
-        <div class="section blue-box">
-            LECTURA DE MEDIDOR
-        </div>
-        <div class="section">
-            <table>
-                <tr>
-                    <th>Medidor</th>
-                    <th>Anterior</th>
-                    <th>Actual</th>
-                    <th>Consumo</th>
-                </tr>
-                <tr>
-                    <td>{{ invoice.reading.meter_number }}</td>
-                    <td>{{ invoice.reading.previous_reading }}</td>
-                    <td>{{ invoice.reading.current_reading }}</td>
-                    <td>{{ invoice.reading.consumption }}</td>
-                </tr>
-            </table>
-        </div> -->
-
-
-
-
-        <!-- <div class="section blue-box">
-            DETALLE DE FACTURACIÓN
-        </div>
-        <div class="section">
-            <table>
-                <tr>
-                    <th>Concepto</th>
-                    <th>Importe</th>
-                </tr>
-                <tr>
-                    <td>Volumen de Agua Potable</td>
-                    <td>{{ invoice.water_volume }}</td>
-                </tr>
-                <tr>
-                    <td>Servicio de Alcantarillado</td>
-                    <td>{{ invoice.sewer_service }}</td>
-                </tr>
-                <tr>
-                    <td>Cargo Fijo</td>
-                    <td>{{ invoice.fixed_charge }}</td>
-                </tr>
-                <tr>
-                    <td>Total</td>
-                    <td><strong>S/. {{ total_paid }}</strong></td>
-                </tr>
-            </table>
-        </div> -->
     </div>
 </body>
 

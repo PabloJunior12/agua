@@ -5,10 +5,17 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.pagination import PageNumberPagination
 from .serializers import UserSerializer
 from .models import User
 
 import requests
+
+class CustomPagination(PageNumberPagination):
+
+    page_size = 5  # Número de registros por página
+    page_size_query_param = 'page_size'  # Permite cambiar el tamaño desde la URL
+    max_page_size = 100  # Tamaño máximo permitido
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -115,4 +122,5 @@ class UserViewSet(ModelViewSet):
     
     queryset = User.objects.all().order_by('id')
     serializer_class = UserSerializer
-    permission_classes = [IsAdminUser] 
+    permission_classes = [IsAdminUser]
+    pagination_class = CustomPagination

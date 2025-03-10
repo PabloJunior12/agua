@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-uma#1&pshedj#xh1(hbzy%z9n)hfr1%7ec11j(3v=7sk7)b&4=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -119,9 +119,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 X_FRAME_OPTIONS = 'ALLOWALL'
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Lima'
 
 USE_I18N = True
 
@@ -133,7 +133,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",  # Ejemplo para un frontend local
-    "https://agua.jsistemas.info/",  # Dominio de producción
+    "https://mi-dominio.com",  # Dominio de producción
 ]
 
 
