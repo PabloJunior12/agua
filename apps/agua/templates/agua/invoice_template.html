@@ -48,7 +48,7 @@
                 <div class="info-general">
 
                     <div class="p-5">
-                        <div class="label">Titular de la conexión:</div>
+                        <div class="label">Titular:</div>
                         <div class="value">{{customer.full_name | upper}}</div>
                     </div>
 
@@ -57,55 +57,26 @@
                         <div class="value">{{customer.address | upper}}</div>
                     </div>
 
+                    <div class="p-5">
+                        <div class="label">Servicio:</div>
+                        <div class="value">{{customer.tariff.service.name}}</div>
+                    </div>
+
+
                     <div class="row">
                         <div class="col">
-                            <div class="label">Tipo de facturacion:</div>
-                            <div class="value">PROMEDIO</div>
+                            <div class="label">Tarifa:</div>
+                            <div class="value">{{ customer.tariff.category.name }}</div>
                         </div>
                         <div class="col">
-                            <div class="label">facturación:</div>
-                            <div class="value">MENSUAL</div>
+                            <div class="label">Tipo de facturacion:</div>
+                            <div class="value">Asignación de consumo</div>
                         </div>
                     </div>
 
                 </div>
                 <div class="title">INFORMACIÓN COMPLEMENTARIA</div>
                 <div class="info-general">
-
-                    <div class="p-5">
-
-                        <table class="billing-table">
-                            <thead>
-                                <tr>
-                                    <th>Concepto</th>
-                                    <th>Cantidad</th>
-                                    <th>Tarifa (S/)</th>
-                                    <th>Total (S/)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Tarifa Fija ({{ reading.service.max_cubico|floatformat:0 }} m³)</td>
-                                    <td>{{ reading.service.max_cubico|floatformat:2 }} m³</td>
-                                    <td>{{ reading.service.fixed_price|floatformat:2 }}</td>
-                                    <td>{{ reading.service.fixed_price|floatformat:2 }}</td>
-                                </tr>
-                                {% if consumption_excess > 0 %}
-                                <tr>
-                                    <td>Consumo Excedente ({{ consumption_excess|floatformat:0 }} m³)</td>
-                                    <td>{{ consumption_excess|floatformat:2 }} m³</td>
-                                    <td>{{ reading.service.extra_rate|floatformat:2 }}</td>
-                                    <td>{{ total_excess_charge|floatformat:2 }}</td>
-                                </tr>
-                                {% endif %}
-                                <tr>
-                                    <td colspan="3"><strong>Total Servicio Agua</strong></td>
-                                    <td><strong>{{ reading.total_amount|floatformat:2 }}</strong></td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                    </div>
 
                     {% if unpaid_readings %}
                     <div class="row">
@@ -169,7 +140,7 @@
                         </div>
                         <div class="col">
                             <div class="label">fecha de emision:</div>
-                            <div class="value">{{reading.issue_date}}</div>
+                            <div class="value">{{reading.reading_date}}</div>
                         </div>
                     </div>
 
@@ -240,13 +211,17 @@
 
                     <div class="p-5">
                         <div class="d-flex justify-content-between">
-                            <span class="label">servicio de Agua potable</span>
-                            <span>{{reading.total_amount}}</span>
+                            <span class="label">servicio de Agua</span>
+                            <span>{{reading.total_water}}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="label">servicio de ALCANTARILLADO</span>
+                            <span>{{reading.total_sewer}}</span>
                         </div>
 
                         <div class="d-flex justify-content-between">
                             <span class="label">cargo fijo</span>
-                            <span>0</span>
+                            <span>{{reading.fixed_charge}}</span>
                         </div>
 
                         <div class="d-flex justify-content-between">
@@ -255,7 +230,7 @@
                         </div>
 
                         <div class="pt-20 d-flex justify-content-between">
-                            <span class="label">Deuda Anterior</span>
+                            <span class="label">SALDO DEUDA ANTERIOR</span>
                             <span>{{total_due}}</span>
                         </div>
 
@@ -264,53 +239,7 @@
                             <span>{{total}}</span>
                         </div>
 
-                    </div>
-
-                    <!-- <table>
-                        <tr>
-                            <th>Descripción</th>
-                            <th>Monto (USD)</th>
-                        </tr>
-                        <tr>
-                            <td>Tarifa fija</td>
-                            <td>{{ fixed_price }}</td>
-                        </tr>
-                        <tr>
-                            <td>Consumo máximo permitido</td>
-                            <td>{{ max_cubico }} m³</td>
-                        </tr>
-                        {% if exceso > 0 %}
-                        <tr>
-                            <td>Exceso de consumo ({{ exceso }} m³ x {{ extra_rate }} USD/m³)</td>
-                            <td>{{ extra_charge }}</td>
-                        </tr>
-                        {% endif %}
-                        <tr>
-                            <td><strong>Total del mes actual</strong></td>
-                            <td><strong>{{ total_amount }}</strong></td>
-                        </tr>
-                    </table> -->
-
-                    <!-- {% if unpaid_readings %}
-                    <h3>Facturas pendientes</h3>
-                    <table>
-                        <tr>
-                            <th>Mes</th>
-                            <th>Monto</th>
-                        </tr>
-                        {% for reading in unpaid_readings %}
-                        <tr>
-                            <td>{{ reading.reading_date|date:"F Y" }}</td>
-                            <td>{{ reading.total_amount }}</td>
-                        </tr>
-                        {% endfor %}
-                        <tr>
-                            <td><strong>Total Adeudado</strong></td>
-                            <td><strong>{{ total_due }}</strong></td>
-                        </tr>
-                    </table>
-                    {% endif %} -->
-
+   
                 </div>
             </div>
 

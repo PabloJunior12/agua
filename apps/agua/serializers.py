@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.timezone import now
 from django.conf import settings
-from .models import Year, Category, Zona, Calle, Reading, Invoice, Customer, Company, InvoicePayment, Service
+from .models import Year, Category, Zona, Calle, Cash, Reading,  Invoice, Customer, Company, PaymentMethod, Service, Tariff
 from .utils import next_month_date
 from django.db import transaction
+
 
 import os
 
@@ -29,6 +31,13 @@ class CompanySerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+class PaymentMethodSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = PaymentMethod
+        fields = '__all__'
 
 class YearSerializer(serializers.ModelSerializer):
 
@@ -78,6 +87,18 @@ class CustomerSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         data = super().to_representation(instance)
+
+        # Estado de deuda del cliente
+        has_pending = instance.readings.filter(is_paid=False, due_date__gte=now().date()).exists()
+        has_overdue = instance.readings.filter(is_paid=False, due_date__lt=now().date()).exists()
+
+        if has_overdue:
+            data["debt_status"] = "overdue"  # Deuda vencida
+        elif has_pending:
+            data["debt_status"] = "pending"  # Deuda aún no vencida
+        else:
+            data["debt_status"] = "clear"  # Sin deuda
+
         if instance.calle:
             data['calle'] = {
                 'id': instance.calle.id,
@@ -88,14 +109,67 @@ class CustomerSerializer(serializers.ModelSerializer):
                     'name': instance.calle.zona.name
                 }
             }
+
+        if instance.tariff:
+            data['tariff'] = {
+                'id': instance.tariff.id,
+                'service' : {
+                    'id' : instance.tariff.service.id,
+                    'name' : instance.tariff.service.name
+                },
+                'category' : {
+                    'id' : instance.tariff.category.id,
+                    'name' : instance.tariff.category.name
+                }
+            }
+
         return data
 
-class ReadingSerializer(serializers.ModelSerializer):
+# Serializer para lectura (retrieve/list)
+class ReadingReadSerializer(serializers.ModelSerializer):
+    payment_status = serializers.SerializerMethodField()
+    days_overdue = serializers.SerializerMethodField()
+    customer = serializers.SerializerMethodField()
 
     class Meta:
         model = Reading
         fields = '__all__'
 
+    def get_payment_status(self, obj):
+        """Calcula el estado de pago"""
+        today = now().date()
+        if obj.is_paid:
+            return 'paid'
+        if obj.due_date and today > obj.due_date:
+            return 'overdue'
+        return 'pending'
+    
+    def get_days_overdue(self, obj):
+        """Calcula días de mora si está vencido"""
+        if not obj.is_paid and obj.due_date:
+            today = now().date()
+            if today > obj.due_date:
+                return (today - obj.due_date).days
+        return 0
+    
+    def get_customer(self, obj):
+        """Estructura los datos del cliente"""
+        return {
+            'id': obj.customer.id,
+            'full_name': obj.customer.full_name,
+            'number': obj.customer.number,
+            'meter_code': obj.customer.meter_code,
+            # Puedes añadir más campos si los necesitas
+            'address': obj.customer.address,
+            'tariff_id': obj.customer.tariff.id if obj.customer.tariff else None
+        }
+
+class ReadingWriteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Reading
+        fields = '__all__'
+    
     def validate(self, data):
         
         customer = data.get('customer', self.instance.customer if self.instance else None)
@@ -159,12 +233,6 @@ class ReadingSerializer(serializers.ModelSerializer):
 
 class InvoiceSerializer(serializers.ModelSerializer):
 
-    payments = serializers.ListField(
-        child=serializers.DictField(
-            child=serializers.IntegerField()
-        ), write_only=True
-    )
-
     class Meta:
         model = Invoice
         fields = '__all__'
@@ -175,7 +243,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
             data['customer'] = {
                 'id': instance.customer.id,
                 'full_name': instance.customer.full_name,
-                'dni' : instance.customer.dni,
+                'number' : instance.customer.number,
                 'meter_code' : instance.customer.meter_code,
             }
         return data
@@ -184,4 +252,34 @@ class ServiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Service
+        fields = '__all__'
+
+class TariffSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tariff
+        fields = '__all__'
+
+    def to_representation(self, instance):
+
+        data = super().to_representation(instance)
+        if instance.service:
+           data['service'] = {
+               'id' : instance.service.id,
+               'name' : instance.service.name
+           }
+
+        if instance.category:
+           data['category'] = {
+               'id' : instance.category.id,
+               'name' : instance.category.name
+           }
+
+        return data
+
+class CashSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        
+        model = Cash
         fields = '__all__'

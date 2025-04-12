@@ -3,29 +3,185 @@
     "model": "agua.company",
     "pk": 1,
     "fields": {
-      "name": "Consultoría & Sistemas-INFO S.A.C",
-      "ruc": "99999999999",
-      "logo": "logos/default.jpg"
+      "name": "SERV AGUA POTAB Y ALCANT DE LIMA-SEDAPAL",
+      "ruc": "20100152356",
+      "address" : "---- autop.ramiro priale nro. 210 ---- la  atarjea lima - lima - el agustino",
+      "logo": "logos/default.png"
+    }
+  },
+  {
+    "model": "agua.paymentmethod",
+    "pk": 1,
+    "fields": {
+      "state": true,
+      "description":"Efectivo"
+    }
+  },
+  {
+    "model": "agua.paymentmethod",
+    "pk": 2,
+    "fields": {
+      "state": true,
+      "description":"Yape"
+    }
+  },
+  {
+    "model": "agua.paymentmethod",
+    "pk": 3,
+    "fields": {
+      "state": true,
+      "description":"Plin"
     }
   },
   {
     "model": "agua.service",
     "pk": 1,
     "fields": {
-      "name": "servicio de agua",
-      "fixed_price": 50,
-      "max_cubico": 10,
-      "extra_rate": 5
+      "name": "SERVICIO DE AGUA Y ALCANTARILLADO",
+      "unit": "M³",
+      "price": 3
+    }
+  },
+  {
+    "model": "agua.service",
+    "pk": 2,
+    "fields": {
+      "name": "INSTALACION DE AGUA",
+      "unit": "Unidad",
+      "price": 210
+    }
+  },
+  {
+    "model": "agua.service",
+    "pk": 3,
+    "fields": {
+      "name": "INSTALACION DE DESAGUE",
+      "unit": "Unidad",
+      "price": 240
+    }
+  },
+  {
+    "model": "agua.service",
+    "pk": 4,
+    "fields": {
+      "name": "CORTE DEL SERVICIO DE AGUA",
+      "unit": "Unidad",
+      "price": 15
+    }
+  },
+  {
+    "model": "agua.service",
+    "pk": 5,
+    "fields": {
+      "name": "RECONEXION DEL SERVICIO DE AGUA",
+      "unit": "Unidad",
+      "price": 15
     }
   },
   {
     "model": "agua.category",
     "pk": 1,
     "fields": {
-      "name": "domestico",
-      "water_fee": 5,
-      "sewer_fee": 0,
-      "mora": 0
+      "name": "DOMESTICO"
+    }
+  },
+  {
+    "model": "agua.category",
+    "pk": 2,
+    "fields": {
+      "name": "SOCIAL"
+    }
+  },
+  {
+    "model": "agua.category",
+    "pk": 3,
+    "fields": {
+      "name": "COMERCIAL"
+    }
+  },
+  {
+    "model": "agua.category",
+    "pk": 4,
+    "fields": {
+      "name": "ESTATAL"
+    }
+  },
+  {
+    "model": "agua.category",
+    "pk": 5,
+    "fields": {
+      "name": "INDUSTRIAL"
+    }
+  },
+
+  {
+    "model": "agua.tariff",
+    "pk": 1,
+    "fields": {
+      "service": 1,
+      "category": 1,
+      "min_consumption" : 0,
+      "max_consumption" : 0,
+      "price_water" : 0.60,
+      "price_sewer" : 3,
+      "is_fixed" : false,
+      "extra_rate" : 0
+    }
+  },
+  {
+    "model": "agua.tariff",
+    "pk": 2,
+    "fields": {
+      "service": 1,
+      "category": 2,
+      "min_consumption" : 0,
+      "max_consumption" : 0,
+      "price_water" : 0.60,
+      "price_sewer" : 3,
+      "is_fixed" : false,
+      "extra_rate" : 0
+    }
+  },
+  {
+    "model": "agua.tariff",
+    "pk": 3,
+    "fields": {
+      "service": 1,
+      "category": 3,
+      "min_consumption" : 0,
+      "max_consumption" : 0,
+      "price_water" : 0.80,
+      "price_sewer" : 4,
+      "is_fixed" : false,
+      "extra_rate" : 0
+    }
+  },
+  {
+    "model": "agua.tariff",
+    "pk": 4,
+    "fields": {
+      "service": 1,
+      "category": 4,
+      "min_consumption" : 0,
+      "max_consumption" : 0,
+      "price_water" : 2,
+      "price_sewer" : 3,
+      "is_fixed" : false,
+      "extra_rate" : 0
+    }
+  },
+  {
+    "model": "agua.tariff",
+    "pk": 5,
+    "fields": {
+      "service": 1,
+      "category": 5,
+      "min_consumption" : 0,
+      "max_consumption" : 100,
+      "price_water" : 2,
+      "price_sewer" : 5,
+      "is_fixed" : false,
+      "extra_rate" : 3
     }
   },
   {
@@ -41,7 +197,7 @@
     "fields": {
       "codigo": "0001",
       "name": "jr abancay",
-      "zona_id" : 1
+      "zona_id": 1
     }
   },
   {
