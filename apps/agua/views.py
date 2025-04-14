@@ -205,7 +205,7 @@ class ReadingViewSet(ModelViewSet):
 
     queryset = Reading.objects.all().order_by('reading_date')
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['customer','is_paid']
+    filterset_fields = ['customer','is_paid','customer__meter_code']
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -246,6 +246,25 @@ class ReadingViewSet(ModelViewSet):
         
         customer = get_object_or_404(Customer, number=dni)
         readings = Reading.objects.filter(customer=customer).order_by('reading_date')
+        serializer = self.get_serializer(readings, many=True)
+        customer_serializer = CustomerSerializer(customer)
+
+        return Response({
+            'readings': serializer.data,
+            'customer': customer_serializer.data
+        })
+    
+    @action(detail=False, methods=['get'], url_path='meter-code/(?P<meter_code>[^/]+)')
+    def get_by_meter_code(self, request, meter_code=None):
+        if not meter_code.isdigit():
+            return Response(
+                {'error': 'El código del medidor debe contener solo números.'},
+                status=400
+            )
+
+        customer = get_object_or_404(Customer, meter_code=meter_code)
+        year = request.GET.get('year')
+        readings = Reading.objects.filter(customer=customer,reading_date__year=year).order_by('reading_date')
         serializer = self.get_serializer(readings, many=True)
         customer_serializer = CustomerSerializer(customer)
 
